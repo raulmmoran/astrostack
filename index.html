@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AstroStack">
+<meta name="theme-color" content="#0a0d13">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.json">
+<title>AstroStack</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">✦</span>
+        <span class="brand-name">AstroStack</span>
+      </div>
+    </header>
+
+    <nav class="stepper">
+      <button class="step active" data-step="1"><span class="step-num">1</span> Cargar</button>
+      <button class="step" data-step="2" disabled><span class="step-num">2</span> Apilar</button>
+      <button class="step" data-step="3" disabled><span class="step-num">3</span> Editar</button>
+      <button class="step" data-step="4" disabled><span class="step-num">4</span> Exportar</button>
+    </nav>
+
+    <main class="content">
+      <section class="panel" id="panel-1">
+        <h2>Archivos FITS</h2>
+        <p class="hint">Carga tus subexposiciones desde la app Archivos. Cuantos más lights, mejor será el resultado.</p>
+
+        <div class="mode-tabs">
+          <button class="mode-tab active" data-mode="new">Nueva sesión</button>
+          <button class="mode-tab" data-mode="combine">Combinar sesiones (mega-stack)</button>
+        </div>
+
+        <div id="panel-1-normal">
+        <div class="filegroup">
+          <div class="filegroup-head">
+            <strong>Lights</strong> <span class="req">obligatorio</span>
+          </div>
+          <label class="btn small file-btn">Añadir archivos…
+            <input type="file" id="input-lights" multiple accept=".fits,.fit,.fts">
+          </label>
+          <div class="filelist" id="list-lights"><span class="empty">Ningún archivo cargado</span></div>
+        </div>
+
+        <div class="filegroup">
+          <div class="filegroup-head">
+            <strong>Darks</strong> <span class="opt">opcional</span>
+          </div>
+          <label class="btn small file-btn">Añadir archivos…
+            <input type="file" id="input-darks" multiple accept=".fits,.fit,.fts">
+          </label>
+          <div class="filelist" id="list-darks"><span class="empty">Ningún archivo cargado</span></div>
+        </div>
+
+        <div class="filegroup">
+          <div class="filegroup-head">
+            <strong>Flats</strong> <span class="opt">opcional</span>
+          </div>
+          <label class="btn small file-btn">Añadir archivos…
+            <input type="file" id="input-flats" multiple accept=".fits,.fit,.fts">
+          </label>
+          <div class="filelist" id="list-flats"><span class="empty">Ningún archivo cargado</span></div>
+        </div>
+
+        <div class="filegroup">
+          <div class="filegroup-head">
+            <strong>Bias</strong> <span class="opt">opcional</span>
+          </div>
+          <label class="btn small file-btn">Añadir archivos…
+            <input type="file" id="input-bias" multiple accept=".fits,.fit,.fts">
+          </label>
+          <div class="filelist" id="list-bias"><span class="empty">Ningún archivo cargado</span></div>
+        </div>
+
+        <button class="btn primary" id="btn-goto-2" disabled>Continuar →</button>
+        </div>
+
+        <div id="panel-combine" class="hidden">
+          <p class="hint">Une varias sesiones de distintas noches del mismo objetivo en un único apilado más profundo. Cada sesión debe ser un "FITS lineal (para combinar)" exportado previamente por AstroStack — en el paso 4 de una sesión anterior.</p>
+
+          <div class="filegroup">
+            <div class="filegroup-head">
+              <strong>Sesiones</strong> <span class="req">mínimo 2</span>
+            </div>
+            <label class="btn small file-btn">Añadir sesiones…
+              <input type="file" id="input-sessions" multiple accept=".fits,.fit,.fts">
+            </label>
+            <div class="filelist" id="list-sessions"><span class="empty">Ninguna sesión cargada</span></div>
+          </div>
+
+          <div class="field-row">
+            <label>Método de combinación</label>
+            <select id="combine-method">
+              <option value="average" selected>Promedio (recomendado entre sesiones)</option>
+              <option value="sigmaClip">Sigma-clip promedio</option>
+              <option value="median">Mediana</option>
+            </select>
+          </div>
+
+          <button class="btn primary" id="btn-combine" disabled>Combinar sesiones</button>
+
+          <div class="progress-wrap hidden" id="progress-wrap-combine">
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill-combine"></div></div>
+            <div class="progress-text" id="progress-text-combine">Preparando…</div>
+          </div>
+          <pre class="log" id="log-combine"></pre>
+        </div>
+      </section>
+
+      <section class="panel hidden" id="panel-2">
+        <h2>Calibración, alineación y apilado</h2>
+        <p class="hint">Esto puede tardar según el número de imágenes. Todo se procesa en tu dispositivo, sin subir nada a internet.</p>
+
+        <div class="field-row">
+          <label>Método de apilado</label>
+          <select id="stack-method">
+            <option value="sigmaClip" selected>Sigma-clip promedio (recomendado)</option>
+            <option value="average">Promedio simple</option>
+            <option value="median">Mediana</option>
+          </select>
+        </div>
+        <div class="field-row" id="sigma-params">
+          <label>Recorte sigma (bajo / alto)</label>
+          <div class="row-inputs">
+            <input type="number" id="sigma-low" value="2.5" step="0.1" min="1" max="5">
+            <input type="number" id="sigma-high" value="2.5" step="0.1" min="1" max="5">
+          </div>
+        </div>
+        <div class="field-row">
+          <label>Sensibilidad detección de estrellas <span class="val" id="star-threshold-val">6.0 σ</span></label>
+          <input type="range" id="star-threshold" min="3" max="10" step="0.5" value="6">
+        </div>
+
+        <div class="checkbox-row">
+          <label><input type="checkbox" id="reject-trails" checked> Detectar y descartar rastros de aviones/satélites</label>
+        </div>
+        <div class="checkbox-row">
+          <label><input type="checkbox" id="mosaic-mode"> Detectar y unir mosaico (modo paseo Seestar/Dwarf)</label>
+        </div>
+        <div class="checkbox-row">
+          <label><input type="checkbox" id="grade-quality" checked> Selección automática de calidad de subs (descarta nubes/trailing)</label>
+        </div>
+        <div class="field-row" id="quality-strictness-row">
+          <label>Nivel de exigencia</label>
+          <select id="quality-strictness">
+            <option value="lenient">Permisivo</option>
+            <option value="standard" selected>Estándar</option>
+            <option value="strict">Estricto</option>
+          </select>
+        </div>
+
+        <button class="btn primary" id="btn-process">Procesar</button>
+
+        <div class="progress-wrap hidden" id="progress-wrap">
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+          <div class="progress-text" id="progress-text">Preparando…</div>
+        </div>
+        <pre class="log" id="log"></pre>
+      </section>
+
+      <section class="panel hidden" id="panel-3">
+        <h2>Edición</h2>
+        <div class="object-guess hidden" id="object-guess"></div>
+        <div class="preview-wrap">
+          <canvas id="preview-canvas"></canvas>
+          <div class="preview-status" id="preview-status"></div>
+        </div>
+        <div class="editor-controls">
+          <div class="control-block">
+            <h3>Gradiente de cielo</h3>
+            <div class="checkbox-row inline"><label><input type="checkbox" id="gradient-removal"> Eliminar gradiente de fondo</label></div>
+            <label>Intensidad <span class="val" id="gradient-val">0.80</span></label>
+            <input type="range" id="gradient-strength" min="0" max="1.5" step="0.02" value="0.8">
+          </div>
+
+          <div class="control-block">
+            <h3>Stretch</h3>
+            <label>Fondo objetivo <span class="val" id="bg-val">0.25</span></label>
+            <input type="range" id="target-bg" min="0.1" max="0.4" step="0.01" value="0.25">
+            <label>Recorte de sombras <span class="val" id="clip-val">2.8</span></label>
+            <input type="range" id="shadows-clip" min="0.5" max="5" step="0.1" value="2.8">
+          </div>
+
+          <div class="control-block">
+            <h3>Niveles</h3>
+            <label>Negro <span class="val" id="black-val">0.00</span></label>
+            <input type="range" id="black" min="0" max="1" step="0.005" value="0">
+            <label>Blanco <span class="val" id="white-val">1.00</span></label>
+            <input type="range" id="white" min="0" max="1" step="0.005" value="1">
+            <label>Gamma <span class="val" id="gamma-val">1.00</span></label>
+            <input type="range" id="gamma" min="0.3" max="2.5" step="0.02" value="1">
+          </div>
+
+          <div class="control-block">
+            <h3>Reducción de ruido</h3>
+            <label>Intensidad <span class="val" id="denoise-val">0.35</span></label>
+            <input type="range" id="denoise-strength" min="0" max="1" step="0.02" value="0.35">
+            <label>Radio <span class="val" id="denoise-radius-val">1.5</span></label>
+            <input type="range" id="denoise-radius" min="0.5" max="4" step="0.1" value="1.5">
+          </div>
+
+          <div class="control-block">
+            <h3>Nitidez</h3>
+            <label>Cantidad <span class="val" id="sharp-val">0.4</span></label>
+            <input type="range" id="sharp-amount" min="0" max="1.5" step="0.02" value="0.4">
+            <label>Radio <span class="val" id="sharp-radius-val">1.2</span></label>
+            <input type="range" id="sharp-radius" min="0.5" max="3" step="0.1" value="1.2">
+          </div>
+
+          <div class="control-block" id="saturation-block">
+            <h3>Color</h3>
+            <label>Saturación <span class="val" id="sat-val">1.20</span></label>
+            <input type="range" id="saturation" min="0" max="2.5" step="0.02" value="1.2">
+          </div>
+
+          <button class="btn secondary" id="btn-reset-edit">Restablecer edición</button>
+          <button class="btn primary" id="btn-goto-4">Continuar a exportar →</button>
+        </div>
+      </section>
+
+      <section class="panel hidden" id="panel-4">
+        <h2>Exportar / compartir</h2>
+        <p class="hint">Se exporta exactamente lo que ves en la vista previa.</p>
+        <div class="export-buttons">
+          <button class="btn primary" id="export-png">PNG</button>
+          <button class="btn primary" id="export-tiff16">TIFF 16-bit</button>
+          <button class="btn primary" id="export-fits">FITS</button>
+        </div>
+        <button class="btn secondary" id="export-linear">FITS lineal (para combinar sesiones más adelante)</button>
+        <div class="preview-wrap small">
+          <canvas id="preview-canvas-2"></canvas>
+        </div>
+
+        <div class="control-block platesolve-block">
+          <h3>Plate-solving real (opcional — necesita internet)</h3>
+          <p class="hint">Sube tu imagen a <strong>astrometry.net</strong> (servicio gratuito externo) para identificar con precisión qué hay en el campo. Esto sale de tu dispositivo — solo actívalo si quieres esta función.</p>
+          <label>Clave API de astrometry.net</label>
+          <input type="text" id="astrometry-key" placeholder="Pega aquí tu API key" class="text-input">
+          <button class="btn secondary" id="btn-platesolve">Resolver con astrometry.net</button>
+          <div class="preview-status" id="platesolve-status"></div>
+          <div id="platesolve-result"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="plateSolve.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
